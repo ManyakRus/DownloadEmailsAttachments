@@ -63,6 +63,14 @@ func DownloadEmails(from int) int {
 		log.Fatal("Wrong LastEmailID: " + sLastEmailID)
 	}
 
+	sFileExtensions := myEnv["FileExtensions"]
+	var FileExtensions []string
+	FileExtensions = strings.Split(sFileExtensions, ",")
+	//LastEmailID, err := strconv.Atoi(sLastEmailID)
+	//if err != nil {
+	//	log.Fatal("Wrong LastEmailID: " + sLastEmailID)
+	//}
+
 	//from := LastEmailID
 	to := from + EmailsCount
 
@@ -122,7 +130,9 @@ func DownloadEmails(from int) int {
 			Filename := file1.Filename
 			ext := filepath.Ext(Filename)
 			ext = strings.ToLower(ext)
-			if ext != ".xls" && ext != ".xlsx" {
+
+			if contains(FileExtensions, ext) == false {
+				//if ext != ".xls" && ext != ".xlsx" {
 				SaveEnv(sMessageId)
 				continue
 			}
@@ -267,4 +277,14 @@ func FetchEmail(MessageChan chan *imap.Message, from, to int, section *imap.Body
 		log.Fatal(err)
 	}
 
+}
+
+func contains(s []string, str string) bool {
+	for _, v := range s {
+		if v == str {
+			return true
+		}
+	}
+
+	return false
 }
