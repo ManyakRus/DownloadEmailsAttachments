@@ -5,3 +5,4 @@ LastEmailID=1
 OutputDirectory=
 PASSWORD=
 PauseSeconds=8
+FileExtensions=".xls,.xlsx"
