@@ -4,4 +4,4 @@ IMAP_SERVER="imap.yandex.ru:993"
 LastEmailID=1
 OutputDirectory=
 PASSWORD=
-PauseSeconds=1
+PauseSeconds=2
