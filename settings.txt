@@ -1,7 +1,7 @@
 DownloadFromDate="2021-01-01 10:00:00"
 EMAIL=""
 IMAP_SERVER="imap.yandex.ru:993"
-LastEmailID=1727
+LastEmailID=1
 OutputDirectory=
 PASSWORD=
-PauseSeconds=3
+PauseSeconds=1
