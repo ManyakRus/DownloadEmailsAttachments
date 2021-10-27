@@ -1,8 +1,7 @@
 //Сделал Александр Никитин
 //Created by Aleksandr Nikitin
 //Skype: Travianbot
-//Licence: Do not delete information about author
-
+//Licence: Do not delete information about author.
 
 package main
 
@@ -25,7 +24,7 @@ import (
 	"github.com/emersion/go-imap/client"
 )
 
-const EmailsCount =100
+const EmailsCount = 100
 const Filename_Settings = "settings.txt"
 
 var myEnv map[string]string
@@ -39,7 +38,7 @@ var EmailClient *client.Client
 
 func DownloadEmails(from int) int {
 	//var Messages []MessageStruct
-	MessageId := from -1
+	MessageId := from - 1
 
 	OutputDirectory := myEnv["OutputDirectory"]
 	if OutputDirectory == "" {
@@ -59,14 +58,13 @@ func DownloadEmails(from int) int {
 	}
 
 	sLastEmailID := myEnv["LastEmailID"]
-	LastEmailID, err :=  strconv.Atoi(sLastEmailID)
+	LastEmailID, err := strconv.Atoi(sLastEmailID)
 	if err != nil {
 		log.Fatal("Wrong LastEmailID: " + sLastEmailID)
 	}
 
 	//from := LastEmailID
-	to := from+EmailsCount
-
+	to := from + EmailsCount
 
 	MessageChan := make(chan *imap.Message, to)
 
@@ -115,7 +113,7 @@ func DownloadEmails(from int) int {
 		}
 
 		EmailDate := RawMessage.Envelope.Date
-		if EmailDate.Before(DownloadFromDate)  {
+		if EmailDate.Before(DownloadFromDate) {
 			SaveEnv(sMessageId)
 			continue
 		}
@@ -156,20 +154,16 @@ func main() {
 	LoadEnv()
 
 	sLastEmailID := myEnv["LastEmailID"]
-	LastEmailID, err :=  strconv.Atoi(sLastEmailID)
+	LastEmailID, err := strconv.Atoi(sLastEmailID)
 	if err != nil {
 		log.Fatal("Wrong LastEmailID: " + sLastEmailID)
 	}
 
 	sPauseSeconds := myEnv["PauseSeconds"]
-	PauseSeconds, err :=  strconv.Atoi(sPauseSeconds)
+	PauseSeconds, err := strconv.Atoi(sPauseSeconds)
 	if err != nil {
 		log.Fatal("Wrong LastEmailID: " + sPauseSeconds)
 	}
-
-
-
-
 
 	start := time.Now()
 	EmailClient = LoginEmail()
@@ -182,9 +176,9 @@ func main() {
 		log.Printf("Time taken %s", elapsed)
 	}()
 
-	from := LastEmailID+1
+	from := LastEmailID + 1
 
-	for ;;{
+	for {
 		from = DownloadEmails(from)
 		from = from + 1
 		time.Sleep(time.Second * time.Duration(PauseSeconds))
@@ -203,7 +197,6 @@ func SaveEnv(sMessageId string) {
 		os.Exit(1)
 		//return
 	}
-
 
 }
 
@@ -275,4 +268,3 @@ func FetchEmail(MessageChan chan *imap.Message, from, to int, section *imap.Body
 	}
 
 }
-
