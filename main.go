@@ -89,8 +89,9 @@ func DownloadEmails(from int) int {
 		//done <- EmailClient.Fetch(seqset, []imap.FetchItem{section.FetchItem()}, MessageChan)
 	}()
 	if err := <-done; err != nil {
-		log.Fatal(err)
-		os.Exit(1)
+		log.Println(err)
+		//os.Exit(1)
+		return MessageId
 	}
 
 	for RawMessage := range MessageChan {
