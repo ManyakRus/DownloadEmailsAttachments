@@ -72,9 +72,9 @@ func DownloadEmails(from int) int {
 	//}
 
 	//from := LastEmailID
-	to := from + EmailsCount
+	to := from + EmailsCount - 1
 
-	MessageChan := make(chan *imap.Message, to)
+	MessageChan := make(chan *imap.Message, EmailsCount)
 
 	done := make(chan error, 1)
 
@@ -177,7 +177,7 @@ func main() {
 	}
 
 	start := time.Now()
-	EmailClient = LoginEmail()
+	LoginEmail()
 	defer EmailClient.Logout()
 	defer log.Println("Logging out")
 
@@ -193,6 +193,7 @@ func main() {
 		from = DownloadEmails(from)
 		from = from + 1
 		time.Sleep(time.Second * time.Duration(PauseSeconds))
+		EMailClientSelect()
 	}
 
 	//const EmailsPerBatch = 1
@@ -229,8 +230,9 @@ func LoginEmail() *client.Client {
 
 	log.Println("Connecting to server...")
 
+	var err error
 	// Connect to server
-	EmailClient, err := client.DialTLS(myEnv["IMAP_SERVER"], nil)
+	EmailClient, err = client.DialTLS(myEnv["IMAP_SERVER"], nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -247,12 +249,7 @@ func LoginEmail() *client.Client {
 	}
 	log.Println("Logged in")
 
-	// Select INBOX
-	_, err = EmailClient.Select("INBOX", false)
-	if err != nil {
-		log.Fatal(err)
-	}
-	//log.Println("number of messages : ", mbox.Messages)
+	EMailClientSelect()
 
 	//seqset := new(imap.SeqSet)
 	//seqset.AddRange(uint32(from), uint32(to))
@@ -266,13 +263,23 @@ func LoginEmail() *client.Client {
 	return EmailClient
 }
 
+func EMailClientSelect() {
+	// Select INBOX
+	mbox, err := EmailClient.Select("INBOX", false)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println("Number of messages total: ", mbox.Messages)
+
+}
+
 func FetchEmail(MessageChan chan *imap.Message, from, to int, section *imap.BodySectionName) {
 	done := make(chan error, 1)
 
 	seqset := new(imap.SeqSet)
 	seqset.AddRange(uint32(from), uint32(to))
 
-	log.Println("Fetching emails from number", seqset.String())
+	log.Println("Fetching emails numbers", seqset.String())
 	done <- EmailClient.Fetch(seqset, []imap.FetchItem{section.FetchItem()}, MessageChan)
 	if err := <-done; err != nil {
 		log.Fatal(err)
