@@ -51,6 +51,9 @@ func DownloadEmails(from int) int {
 	}
 
 	sDownloadFromDate := myEnv["DownloadFromDate"]
+	if sDownloadFromDate == "" {
+		sDownloadFromDate = "2000-01-01 00:00:00"
+	}
 	layout := "2006-01-02 15:04:05"
 	DownloadFromDate, err := time.Parse(layout, sDownloadFromDate)
 	if err != nil {
@@ -85,9 +88,16 @@ func DownloadEmails(from int) int {
 	section := imap.BodySectionName{}
 	//section := imap.FetchEnvelope
 	go func() {
-		done <- EmailClient.Fetch(seqset, []imap.FetchItem{section.FetchItem(), imap.FetchEnvelope}, MessageChan)
-		//done <- EmailClient.Fetch(seqset, []imap.FetchItem{section.FetchItem()}, MessageChan)
+		if EmailClient != nil {
+			done <- EmailClient.Fetch(seqset, []imap.FetchItem{section.FetchItem(), imap.FetchEnvelope}, MessageChan)
+			//done <- EmailClient.Fetch(seqset, []imap.FetchItem{section.FetchItem()}, MessageChan)
+		}
 	}()
+
+	if EmailClient == nil {
+		return MessageId
+	}
+
 	if err := <-done; err != nil {
 		log.Println(err)
 		//os.Exit(1)
@@ -178,8 +188,12 @@ func main() {
 
 	start := time.Now()
 	LoginEmail()
-	defer EmailClient.Logout()
-	defer log.Println("Logging out")
+	defer func() {
+		if EmailClient != nil {
+			EmailClient.Logout()
+			log.Println("Logging out")
+		}
+	}()
 
 	defer func() {
 		//log.Printf("Read %v messages", len(Messages))
@@ -234,7 +248,8 @@ func LoginEmail() *client.Client {
 	// Connect to server
 	EmailClient, err = client.DialTLS(myEnv["IMAP_SERVER"], nil)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return EmailClient
 	}
 
 	// Don't forget to logout
@@ -245,9 +260,15 @@ func LoginEmail() *client.Client {
 	email := myEnv["EMAIL"]
 	password := myEnv["PASSWORD"]
 	if err := EmailClient.Login(email, password); err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return EmailClient
 	}
-	log.Println("Logged in")
+	if err != nil {
+		log.Println(err)
+		return EmailClient
+	} else {
+		log.Println("Logged in")
+	}
 
 	EMailClientSelect()
 
@@ -264,10 +285,18 @@ func LoginEmail() *client.Client {
 }
 
 func EMailClientSelect() {
+	if EmailClient == nil {
+		log.Println("Error: EmailClient=nil !")
+		LoginEmail()
+		return
+	}
+
 	// Select INBOX
 	mbox, err := EmailClient.Select("INBOX", false)
 	if err != nil {
-		log.Fatal(err)
+		log.Println("Can not select emails, error:", err)
+		LoginEmail()
+		return
 	}
 	log.Println("Number of messages total: ", mbox.Messages)
 

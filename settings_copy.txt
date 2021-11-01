@@ -1,3 +1,4 @@
+aaa=""
 DownloadFromDate="2021-01-01 00:00:00"
 EMAIL=""
 IMAP_SERVER="imap.yandex.ru:993"
