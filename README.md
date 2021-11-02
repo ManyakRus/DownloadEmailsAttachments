@@ -1,9 +1,9 @@
 DownloadEmailsAttachments
 
-Сделал Александр Никитин
-Created by Aleksandr Nikitin
-Skype: Travianbot
-https://infostart.ru/public/1542013/
+Сделал Александр Никитин<br> 
+Created by Aleksandr Nikitin<br>
+Skype: Travianbot<br>
+https://infostart.ru/public/1542013/  <br>
 Licence: Do not delete information about author and website
 
 Need:
