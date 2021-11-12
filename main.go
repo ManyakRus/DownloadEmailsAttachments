@@ -142,9 +142,16 @@ func DownloadEmails(from int) int {
 			ext := filepath.Ext(Filename)
 			ext = strings.ToLower(ext)
 
+			//if Filename[0:9] == "=?utf-8?B?" {
+			//sDec, err := b64.StdEncoding.DecodeString(Filename)
+			//if err != nil {
+			//	Filename = string(sDec)
+			//}
+			//}
+
 			if contains(FileExtensions, ext) == false {
 				//if ext != ".xls" && ext != ".xlsx" {
-				SaveEnv(sMessageId)
+				//SaveEnv(sMessageId)
 				continue
 			}
 
