@@ -336,27 +336,27 @@ func decodeAttachment(part *multipart.Part) (at Attachment, err error) {
 	//+sanek
 	filename := ""
 	s1 := part.Header.Get("Content-Type")
-	if len(s1) > 42 && s1[0:42] == "application/vnd.ms-excel; name=\"=?utf-8?B?" {
-		sDec, err := b64.StdEncoding.DecodeString(s1[42:])
-		if err != nil {
-			filename = string(sDec)
-		}
-	} else if len(s1) > 49 && s1[0:49] == "application/vnd.ms-excel; name=\"=?windows-1251?B?" {
-		s2, err := b64.StdEncoding.DecodeString(s1[49:])
-		s2 = DecodeWindows1251(s2)
-		if err != nil {
-			filename = string(s2)
-		}
+	s_low := strings.ToLower(s1)
+	if len(s_low) > 42 && s_low[0:42] == "application/vnd.ms-excel; name=\"=?utf-8?b?" {
+		s2 := s1[42:]
+		filename = FindFilenameFromBase64(s2, "?= =?UTF-8?B?")
+	} else if len(s_low) > 49 && s_low[0:49] == "application/vnd.ms-excel; name=\"=?windows-1251?b?" {
+		s2 := s1[49:]
+		s3 := FindFilenameFromBase64(s2, "?= =?windows-1251?B?")
+		//s3, err := b64.StdEncoding.DecodeString(s2)
+		s4 := DecodeWindows1251([]byte(s3))
+		//if err == nil {
+		filename = string(s4)
+		//}
 
-	} else if len(s1) > 83 && s1[0:83] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; name=\"=?UTF-8?B?" {
-		sDec, err := b64.StdEncoding.DecodeString(s1[83:])
-		if err != nil {
-			filename = string(sDec)
-		}
+	} else if len(s_low) > 83 && s_low[0:83] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; name=\"=?utf-8?b?" {
+		s2 := s1[83:]
+		filename = FindFilenameFromBase64(s2, "?= =?UTF-8?B?")
 
 	} else {
 		filename = decodeMimeSentence(part.FileName())
 	}
+	filename = strings.Replace(filename, ":", "_", -1)
 	//-sanek
 
 	//filename = decodeMimeSentence(part.FileName())
@@ -556,4 +556,22 @@ func EncodeWindows1251(ba []uint8) []uint8 {
 	enc := charmap.Windows1251.NewEncoder()
 	out, _ := enc.String(string(ba))
 	return []uint8(out)
+}
+
+func FindFilenameFromBase64(s string, Separator string) string {
+	Otvet := ""
+
+	if len(s) > 4 && s[len(s)-3:] == "?=\"" {
+		s = s[:len(s)-3]
+	}
+
+	MassS := strings.Split(s, Separator)
+	for _, Mass1 := range MassS {
+		sDec, err := b64.StdEncoding.DecodeString(Mass1)
+		if err == nil {
+			Otvet = Otvet + string(sDec)
+		}
+	}
+
+	return Otvet
 }
