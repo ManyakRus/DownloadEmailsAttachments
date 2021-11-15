@@ -11,6 +11,7 @@ import (
 	//"bytes"
 	//"github.com/DusanKasan/parsemail"
 	"DownloadEmailsAttachments/parsemail"
+	b64 "encoding/base64"
 	"github.com/joho/godotenv"
 	"io/ioutil"
 	"path/filepath"
@@ -165,6 +166,7 @@ func DownloadEmails(from int) int {
 			}
 
 			PersonalName := RawMessage.Envelope.From[0].PersonalName
+			PersonalName = StringFromBase64(PersonalName)
 
 			EmailFrom := "From(" + PersonalName + " (" + RawMessage.Envelope.From[0].MailboxName + "@" + RawMessage.Envelope.From[0].HostName + "))"
 			ioutil.WriteFile(OutputDirectory+EmailFrom+"_"+Filename, massBytes, 0644)
@@ -333,4 +335,23 @@ func contains(s []string, str string) bool {
 	}
 
 	return false
+}
+
+func StringFromBase64(s string) string {
+	Otvet := s
+
+	if len(s) > 10 && s[0:10] == "=?utf-8?B?" {
+		sDec, err := b64.StdEncoding.DecodeString(s[10:])
+		if err != nil {
+			Otvet = string(sDec)
+		}
+	} else if len(s) > 17 && s[0:17] == "=?windows-1251?B?" {
+		s2, err := b64.StdEncoding.DecodeString(s[17:])
+		s2 = parsemail.DecodeWindows1251(s2)
+		if err != nil {
+			Otvet = string(s2)
+		}
+	}
+
+	return Otvet
 }
