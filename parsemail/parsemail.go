@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	b64 "encoding/base64" //sanek
 	"fmt"
+	"golang.org/x/text/encoding/charmap" //sanek
 	"io"
 	"io/ioutil"
 	"mime"
@@ -335,8 +336,20 @@ func decodeAttachment(part *multipart.Part) (at Attachment, err error) {
 	//+sanek
 	filename := ""
 	s1 := part.Header.Get("Content-Type")
-	if s1[0:42] == "application/vnd.ms-excel; name=\"=?utf-8?B?" {
+	if len(s1) > 42 && s1[0:42] == "application/vnd.ms-excel; name=\"=?utf-8?B?" {
 		sDec, err := b64.StdEncoding.DecodeString(s1[42:])
+		if err != nil {
+			filename = string(sDec)
+		}
+	} else if len(s1) > 49 && s1[0:49] == "application/vnd.ms-excel; name=\"=?windows-1251?B?" {
+		s2, err := b64.StdEncoding.DecodeString(s1[49:])
+		s2 = DecodeWindows1251(s2)
+		if err != nil {
+			filename = string(s2)
+		}
+
+	} else if len(s1) > 83 && s1[0:83] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; name=\"=?UTF-8?B?" {
+		sDec, err := b64.StdEncoding.DecodeString(s1[83:])
 		if err != nil {
 			filename = string(sDec)
 		}
@@ -532,3 +545,15 @@ type Email struct {
 //	// directory path information must not be used.
 //	return filepath.Base(filename)
 //}
+
+func DecodeWindows1251(ba []uint8) []uint8 {
+	dec := charmap.Windows1251.NewDecoder()
+	out, _ := dec.Bytes(ba)
+	return out
+}
+
+func EncodeWindows1251(ba []uint8) []uint8 {
+	enc := charmap.Windows1251.NewEncoder()
+	out, _ := enc.String(string(ba))
+	return []uint8(out)
+}

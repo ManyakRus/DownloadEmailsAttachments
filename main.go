@@ -6,9 +6,11 @@
 package main
 
 import (
+	//"github.com/DusanKasan/parsemail"
 	//"fmt"
 	//"bytes"
-	"github.com/DusanKasan/parsemail"
+	//"github.com/DusanKasan/parsemail"
+	"DownloadEmailsAttachments/parsemail"
 	"github.com/joho/godotenv"
 	"io/ioutil"
 	"path/filepath"

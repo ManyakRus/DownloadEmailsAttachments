@@ -1,0 +1,3 @@
+module parsemail
+
+go 1.17
