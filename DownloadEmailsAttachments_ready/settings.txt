@@ -1,0 +1,9 @@
+aaa=""
+DownloadFromDate="2021-01-01 00:00:00"
+EMAIL=""
+IMAP_SERVER="imap.yandex.ru:993"
+LastEmailID=0
+OutputDirectory=
+PASSWORD=
+PauseSeconds=1
+FileExtensions=.xls,.xlsx
