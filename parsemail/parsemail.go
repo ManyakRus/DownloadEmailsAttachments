@@ -364,6 +364,9 @@ func decodeAttachment(part *multipart.Part) (at Attachment, err error) {
 	filename = FindFilenameFromAttachment(s1)
 	filename = strings.Replace(filename, ":", "_", -1)
 
+	if filename == "" {
+		filename = decodeMimeSentence(part.FileName())
+	}
 	//filename = decodeMimeSentence(part.FileName())
 	decoded, err := decodeContent(part, part.Header.Get("Content-Transfer-Encoding"))
 	if err != nil {
