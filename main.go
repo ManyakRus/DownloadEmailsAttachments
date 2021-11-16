@@ -145,6 +145,10 @@ func DownloadEmails(from int) int {
 			ext := filepath.Ext(Filename)
 			ext = strings.ToLower(ext)
 
+			if Filename == "" {
+				log.Println("Empty filename EMail id: " + strconv.Itoa(MessageId))
+			}
+
 			//if Filename[0:9] == "=?utf-8?B?" {
 			//sDec, err := b64.StdEncoding.DecodeString(Filename)
 			//if err != nil {

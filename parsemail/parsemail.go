@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"mime"
 	"mime/multipart"
+	"mime/quotedprintable"
 	"net/mail"
 	"strings"
 	"time"
@@ -333,31 +334,35 @@ func isAttachment(part *multipart.Part) bool {
 }
 
 func decodeAttachment(part *multipart.Part) (at Attachment, err error) {
+	//-sanek
 	//+sanek
 	filename := ""
-	s1 := part.Header.Get("Content-Type")
-	s_low := strings.ToLower(s1)
-	if len(s_low) > 42 && s_low[0:42] == "application/vnd.ms-excel; name=\"=?utf-8?b?" {
-		s2 := s1[42:]
-		filename = FindFilenameFromBase64(s2, "?= =?UTF-8?B?")
-	} else if len(s_low) > 49 && s_low[0:49] == "application/vnd.ms-excel; name=\"=?windows-1251?b?" {
-		s2 := s1[49:]
-		s3 := FindFilenameFromBase64(s2, "?= =?windows-1251?B?")
-		//s3, err := b64.StdEncoding.DecodeString(s2)
-		s4 := DecodeWindows1251([]byte(s3))
-		//if err == nil {
-		filename = string(s4)
-		//}
+	s1 := part.Header.Get("Content-Disposition")
+	s1 = strings.ReplaceAll(s1, "attachment; filename=", "")
 
-	} else if len(s_low) > 83 && s_low[0:83] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; name=\"=?utf-8?b?" {
-		s2 := s1[83:]
-		filename = FindFilenameFromBase64(s2, "?= =?UTF-8?B?")
-
-	} else {
-		filename = decodeMimeSentence(part.FileName())
-	}
+	////s1 := part.Header.Get("Content-Type")
+	//s_low := strings.ToLower(s1)
+	//if len(s_low) > 42 && s_low[0:42] == "application/vnd.ms-excel; name=\"=?utf-8?b?" {
+	//	s2 := s1[42:]
+	//	filename = FindFilenameFromBase64(s2, "?= =?UTF-8?B?")
+	//} else if len(s_low) > 49 && s_low[0:49] == "application/vnd.ms-excel; name=\"=?windows-1251?b?" {
+	//	s2 := s1[49:]
+	//	s3 := FindFilenameFromBase64(s2, "?= =?windows-1251?B?")
+	//	//s3, err := b64.StdEncoding.DecodeString(s2)
+	//	s4 := DecodeWindows1251([]byte(s3))
+	//	//if err == nil {
+	//	filename = string(s4)
+	//	//}
+	//
+	//} else if len(s_low) > 83 && s_low[0:83] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; name=\"=?utf-8?b?" {
+	//	s2 := s1[83:]
+	//	filename = FindFilenameFromBase64(s2, "?= =?UTF-8?B?")
+	//
+	//} else {
+	//	filename = decodeMimeSentence(part.FileName())
+	//}
+	filename = FindFilenameFromAttachment(s1)
 	filename = strings.Replace(filename, ":", "_", -1)
-	//-sanek
 
 	//filename = decodeMimeSentence(part.FileName())
 	decoded, err := decodeContent(part, part.Header.Get("Content-Transfer-Encoding"))
@@ -565,11 +570,134 @@ func FindFilenameFromBase64(s string, Separator string) string {
 		s = s[:len(s)-3]
 	}
 
-	MassS := strings.Split(s, Separator)
+	MassS := SplitCaseInsensivity(s, Separator)
 	for _, Mass1 := range MassS {
 		sDec, err := b64.StdEncoding.DecodeString(Mass1)
 		if err == nil {
 			Otvet = Otvet + string(sDec)
+		}
+	}
+
+	return Otvet
+}
+
+func SplitCaseInsensivity(s, Separator string) []string {
+	var Otvet []string
+
+	//s2 := strings.ToLower(s)
+	Separator = strings.ToLower(Separator)
+	LenSeparator := len(Separator)
+
+	s3 := s
+
+	var SNow string
+	f := 0
+	StartFrom := 0
+	for (f + LenSeparator) < len(s3) {
+		SNow = s[StartFrom+f : StartFrom+f+LenSeparator]
+		if (f+LenSeparator) < len(s3) && strings.ToLower(SNow) == Separator {
+			Otvet = append(Otvet, s[StartFrom:StartFrom+f])
+			s3 = s[StartFrom+f+LenSeparator:]
+			StartFrom = StartFrom + f + LenSeparator
+			f = -1
+		}
+		f = f + 1
+	}
+
+	if s3 != "" {
+		Otvet = append(Otvet, s3)
+	}
+
+	return Otvet
+}
+
+func FindFilenameFromAttachment(s string) string {
+	Otvet := ""
+
+	var MassS []string
+	MassS = make([]string, 0)
+	LenS := len(s)
+
+	Start := 1
+	s2 := ""
+	var s1 string
+	for i := 1; i < (LenS - 3); i++ {
+		s1 = s[i-1 : i+2]
+		if s1 == "\"=?" || s1 == " =?" {
+			s2 = s[Start-1 : i-1]
+			if s2 != "" {
+				MassS = append(MassS, s2)
+			}
+			Start = i + 3
+		}
+	}
+
+	if Start < LenS {
+		s2 = s[Start-1:]
+		if s2 != "" {
+			MassS = append(MassS, s2)
+		}
+	}
+
+	//уберём в конце ?=
+	for f, Mass1 := range MassS {
+		len1 := len(Mass1)
+		if len1 > 3 && Mass1[len1-3:] == "?=\"" {
+			MassS[f] = Mass1[:len1-3]
+		}
+		if len1 > 2 && Mass1[len1-2:] == "?=" {
+			MassS[f] = Mass1[:len1-2]
+		}
+	}
+
+	//
+	for _, Mass1 := range MassS {
+		len1 := len(Mass1)
+		if len1 > 15 && strings.ToLower(Mass1[:15]) == "windows-1251?b?" {
+			s2 = Mass1[15:]
+			s3, err := b64.StdEncoding.DecodeString(s2)
+			s4 := DecodeWindows1251([]byte(s3))
+			if err == nil {
+				Otvet = Otvet + string(s4)
+			}
+		} else if len1 > 8 && strings.ToLower(Mass1[:8]) == "utf-8?b?" {
+			s2 = Mass1[8:]
+			s3, err := b64.StdEncoding.DecodeString(s2)
+			if err == nil {
+				Otvet = Otvet + string(s3)
+			}
+		} else if len1 > 9 && strings.ToLower(Mass1[:9]) == "koi8-r?b?" {
+			s2 = Mass1[9:]
+			s3, err := b64.StdEncoding.DecodeString(s2)
+			if err == nil {
+				d := charmap.KOI8R.NewDecoder()
+				Otvet1, _ := d.Bytes([]byte(s3))
+				Otvet = Otvet + string(Otvet1)
+			}
+		} else if len1 > 15 && strings.ToLower(Mass1[:15]) == "windows-1251?q?" {
+			s2 = Mass1[15:]
+
+			Otvet1, err := io.ReadAll(quotedprintable.NewReader(strings.NewReader(s2)))
+			if err == nil {
+				Otvet1 = DecodeWindows1251([]byte(Otvet1))
+				Otvet = Otvet + string(Otvet1)
+			}
+
+		} else if len1 > 8 && strings.ToLower(Mass1[:8]) == "utf-8?q?" {
+			s2 = Mass1[8:]
+
+			Otvet1, err := io.ReadAll(quotedprintable.NewReader(strings.NewReader(s2)))
+			if err == nil {
+				Otvet = Otvet + string(Otvet1)
+			}
+		} else if len1 > 9 && strings.ToLower(Mass1[:9]) == "koi8-r?q?" {
+			s2 = Mass1[9:]
+			s3, err := io.ReadAll(quotedprintable.NewReader(strings.NewReader(s2)))
+			if err == nil {
+				d := charmap.KOI8R.NewDecoder()
+				Otvet1, _ := d.Bytes([]byte(s3))
+				Otvet = Otvet + string(Otvet1)
+			}
 		}
 	}
 
