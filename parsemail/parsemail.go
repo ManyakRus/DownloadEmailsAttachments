@@ -363,6 +363,8 @@ func decodeAttachment(part *multipart.Part) (at Attachment, err error) {
 	//}
 	filename = FindFilenameFromAttachment(s1)
 	filename = strings.Replace(filename, ":", "_", -1)
+	filename = strings.Replace(filename, "\t", " ", -1)
+	filename = strings.ReplaceAll(filename, "\"", "")
 
 	if filename == "" {
 		filename = decodeMimeSentence(part.FileName())
@@ -665,9 +667,17 @@ func FindFilenameFromAttachment(s string) string {
 			}
 		} else if len1 > 8 && strings.ToLower(Mass1[:8]) == "utf-8?b?" {
 			s2 = Mass1[8:]
+			s4 := ""
+
+			pos1 := strings.Index(s2, "?=")
+			if pos1 > 0 {
+				s4 = s2[pos1+2:]
+				s2 = s2[:pos1]
+			}
+
 			s3, err := b64.StdEncoding.DecodeString(s2)
 			if err == nil {
-				Otvet = Otvet + string(s3)
+				Otvet = Otvet + string(s3) + s4
 			}
 		} else if len1 > 9 && strings.ToLower(Mass1[:9]) == "koi8-r?b?" {
 			s2 = Mass1[9:]

@@ -28,7 +28,7 @@ import (
 )
 
 const EmailsCount = 100
-const Filename_Settings = "settings.txt"
+const Filename_Settings = "Settings.txt"
 
 var myEnv map[string]string
 
@@ -166,14 +166,23 @@ func DownloadEmails(from int) int {
 			massBytes, err := ioutil.ReadAll(file1.Data)
 			if err != nil {
 				log.Fatal("Can not read message id: " + sMessageId)
-				os.Exit(1)
+				//os.Exit(1)
 			}
 
 			PersonalName := RawMessage.Envelope.From[0].PersonalName
 			PersonalName = StringFromBase64(PersonalName)
+			PersonalName2 := parsemail.FindFilenameFromAttachment(PersonalName)
+			if PersonalName2 != "" {
+				PersonalName = PersonalName2
+			}
+			PersonalName = strings.TrimSpace(PersonalName)
 
 			EmailFrom := "From(" + PersonalName + " (" + RawMessage.Envelope.From[0].MailboxName + "@" + RawMessage.Envelope.From[0].HostName + "))"
-			ioutil.WriteFile(OutputDirectory+EmailFrom+"_"+Filename, massBytes, 0644)
+			FilenameNew := OutputDirectory + EmailFrom + "_" + Filename
+			err = ioutil.WriteFile(FilenameNew, massBytes, 0644)
+			if err != nil {
+				log.Println("Can not save file: " + FilenameNew + " Error: " + err.Error())
+			}
 
 		}
 		SaveEnv(sMessageId)
