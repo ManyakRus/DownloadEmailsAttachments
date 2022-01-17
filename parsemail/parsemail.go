@@ -623,17 +623,27 @@ func FindFilenameFromAttachment(s string) string {
 	MassS = make([]string, 0)
 	LenS := len(s)
 
+	if s[LenS-1:LenS] == "\"" {
+		s = s[:LenS-1]
+	}
+
+	if s[0:1] == "\"" {
+		s = s[1:]
+	}
+	LenS = len(s)
+
 	Start := 1
 	s2 := ""
 	var s1 string
 	for i := 1; i < (LenS - 3); i++ {
-		s1 = s[i-1 : i+2]
-		if s1 == "\"=?" || s1 == " =?" {
+
+		s1 = s[i-1 : i+1]
+		if s1 == "=?" {
 			s2 = s[Start-1 : i-1]
 			if s2 != "" {
 				MassS = append(MassS, s2)
 			}
-			Start = i + 3
+			Start = i + 2
 		}
 	}
 
@@ -646,13 +656,17 @@ func FindFilenameFromAttachment(s string) string {
 
 	//уберём в конце ?=
 	for f, Mass1 := range MassS {
-		len1 := len(Mass1)
-		if len1 > 3 && Mass1[len1-3:] == "?=\"" {
-			MassS[f] = Mass1[:len1-3]
+		pos1 := strings.Index(Mass1, "?=")
+		if pos1 > 0 {
+			MassS[f] = Mass1[:pos1]
 		}
-		if len1 > 2 && Mass1[len1-2:] == "?=" {
-			MassS[f] = Mass1[:len1-2]
-		}
+		//len1 := len(Mass1)
+		//if len1 > 3 && Mass1[len1-3:] == "?=\"" {
+		//	MassS[f] = Mass1[:len1-3]
+		//}
+		//if len1 > 2 && Mass1[len1-2:] == "?=" {
+		//	MassS[f] = Mass1[:len1-2]
+		//}
 	}
 
 	//
