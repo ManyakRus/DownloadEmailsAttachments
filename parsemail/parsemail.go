@@ -637,13 +637,13 @@ func FindFilenameFromAttachment(s string) string {
 	var s1 string
 	for i := 1; i < (LenS - 3); i++ {
 
-		s1 = s[i-1 : i+1]
-		if s1 == "=?" {
+		s1 = s[i-1 : i+2]
+		if s1 == " =?" {
 			s2 = s[Start-1 : i-1]
 			if s2 != "" {
 				MassS = append(MassS, s2)
 			}
-			Start = i + 2
+			Start = i + 3
 		}
 	}
 
@@ -659,6 +659,10 @@ func FindFilenameFromAttachment(s string) string {
 		pos1 := strings.Index(Mass1, "?=")
 		if pos1 > 0 {
 			MassS[f] = Mass1[:pos1]
+		}
+
+		if Mass1[0:2] == "=?" {
+			MassS[f] = Mass1[2:]
 		}
 		//len1 := len(Mass1)
 		//if len1 > 3 && Mass1[len1-3:] == "?=\"" {
